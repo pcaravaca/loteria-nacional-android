@@ -16,10 +16,12 @@ import retrofit2.Response
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityLoginBinding
+    private lateinit var updater: Updater
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         SessionStore.init(this)
+        updater = Updater(this, BuildConfig.LOTERIA_URL)
 
         if (SessionStore.isLoggedIn) {
             irAHome()
@@ -33,6 +35,14 @@ class LoginActivity : AppCompatActivity() {
         b.tvRecuperar.setOnClickListener {
             Toast.makeText(this, "Pedile la clave a tu punto o al admin", Toast.LENGTH_SHORT).show()
         }
+
+        // Revisa si hay una versión más nueva publicada en la web (descargar/version.json).
+        updater.check()
+    }
+
+    override fun onDestroy() {
+        updater.unregister()
+        super.onDestroy()
     }
 
     private fun entrar() {
