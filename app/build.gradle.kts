@@ -17,7 +17,7 @@ android {
         buildConfigField(
             "String",
             "LOTERIA_URL",
-            "\"" + (project.findProperty("LOTERIA_URL") as String? ?: "http://100.89.167.67:18081") + "\"",
+            "\"" + (project.findProperty("LOTERIA_URL") as String? ?: "http://100.89.167.67:18082") + "\"",
         )
     }
 
