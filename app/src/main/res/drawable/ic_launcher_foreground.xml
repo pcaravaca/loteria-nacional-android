@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Marca de la app: "LN" en dorado sobre el esmeralda del fondo (zona segura 66dp). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#C9A227"
+        android:pathData="M30,38 h12 l14,24 v-24 h10 v34 h-10 l-16,-28 v28 h-10 z" />
+    <path
+        android:fillColor="#E8CE7A"
+        android:pathData="M62,38 h10 v30 h14 v4 h-24 z" />
+</vector>
