@@ -2,6 +2,8 @@ package com.diamondsb.lotto
 
 import android.content.Intent
 import android.os.Bundle
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +30,11 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityHomeBinding
     private lateinit var updater: Updater
+    private enum class Modulo { SORTEOS, RIFAS, CASINO }
+
+    private var modulo = Modulo.SORTEOS
+    private var tokenInyectado = false
+
     private val sorteos = mutableListOf<JsonObject>()
     private val loterias = mutableMapOf<Long, JsonObject>()
 
@@ -50,6 +57,9 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
+
+        prepararModulos()
+        seleccionar(Modulo.SORTEOS)
 
         updater = Updater(this, BuildConfig.LOTERIA_URL)
         updater.check()
@@ -258,4 +268,49 @@ class HomeActivity : AppCompatActivity() {
             hb.btnJugar.setOnClickListener { apostar(s) }
         }
     }
+
+private fun prepararModulos() {
+    b.tabSorteos.setOnClickListener { seleccionar(Modulo.SORTEOS) }
+    b.tabRifas.setOnClickListener { seleccionar(Modulo.RIFAS) }
+    b.tabCasino.setOnClickListener { seleccionar(Modulo.CASINO) }
+
+    val ws = b.webModulo.settings
+    ws.javaScriptEnabled = true
+    ws.domStorageEnabled = true
+    ws.loadWithOverviewMode = true
+    ws.useWideViewPort = true
+
+    b.webModulo.webViewClient = object : WebViewClient() {
+        override fun onPageFinished(view: WebView, url: String) {
+            // La web espera el JWT en localStorage('loteria_token'); se lo pasamos
+            // una sola vez y despues recargamos el modulo elegido.
+            if (!tokenInyectado && !SessionStore.token.isNullOrBlank()) {
+                tokenInyectado = true
+                val tk = SessionStore.token!!.replace("'", "\\'")
+                view.evaluateJavascript("localStorage.setItem('loteria_token','$tk')", null)
+                view.postDelayed({ if (modulo != Modulo.SORTEOS) cargarModulo(modulo) }, 200)
+            }
+        }
+    }
+    b.webModulo.loadUrl(BuildConfig.LOTERIA_URL)
+}
+
+private fun seleccionar(nuevo: Modulo) {
+    modulo = nuevo
+    b.contenidoSorteos.visibility = if (nuevo == Modulo.SORTEOS) View.VISIBLE else View.GONE
+    b.webModulo.visibility = if (nuevo == Modulo.SORTEOS) View.GONE else View.VISIBLE
+    val activo = getColor(R.color.lot_accent)
+    val inactivo = getColor(R.color.lot_text_muted)
+    b.tabSorteos.setTextColor(if (nuevo == Modulo.SORTEOS) activo else inactivo)
+    b.tabRifas.setTextColor(if (nuevo == Modulo.RIFAS) activo else inactivo)
+    b.tabCasino.setTextColor(if (nuevo == Modulo.CASINO) activo else inactivo)
+    if (nuevo != Modulo.SORTEOS) cargarModulo(nuevo)
+}
+
+private fun cargarModulo(nuevo: Modulo) {
+    val base = BuildConfig.LOTERIA_URL.trimEnd('/')
+    val ruta = if (nuevo == Modulo.RIFAS) "#/rifas" else "#/casino"
+    val tk = SessionStore.token?.replace("'", "\\'") ?: ""
+    b.webModulo.loadUrl("$base/?token=$tk$ruta")
+}
 }
