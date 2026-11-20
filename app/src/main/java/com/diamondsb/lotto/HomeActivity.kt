@@ -27,6 +27,7 @@ import java.util.Locale
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityHomeBinding
+    private lateinit var updater: Updater
     private val sorteos = mutableListOf<JsonObject>()
     private val loterias = mutableMapOf<Long, JsonObject>()
 
@@ -50,11 +51,21 @@ class HomeActivity : AppCompatActivity() {
             finish()
         }
 
+        updater = Updater(this, BuildConfig.LOTERIA_URL)
+        updater.check()
+
         cargar()
+    }
+
+    override fun onDestroy() {
+        if (::updater.isInitialized) updater.unregister()
+        super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
+        // Cada vez que la app vuelve a primer plano revisa si hay versión nueva.
+        if (::updater.isInitialized) updater.check()
         // El saldo puede haber cambiado por una apuesta u otro dispositivo.
         ApiClient.api.me().enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, res: Response<JsonObject>) {
