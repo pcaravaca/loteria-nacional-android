@@ -15,13 +15,11 @@
         android:paddingEnd="24dp"
         android:paddingBottom="32dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="LN"
-            android:textColor="@color/lot_accent"
-            android:textSize="52sp"
-            android:textStyle="bold" />
+        <ImageView
+            android:layout_width="118dp"
+            android:layout_height="118dp"
+            android:contentDescription="Lotería Nacional"
+            android:src="@drawable/logo_full" />
 
         <TextView
             android:layout_width="wrap_content"
