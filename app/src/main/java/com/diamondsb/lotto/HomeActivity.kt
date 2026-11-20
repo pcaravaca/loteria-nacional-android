@@ -2,6 +2,8 @@ package com.diamondsb.lotto
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.view.LayoutInflater
@@ -34,6 +36,16 @@ class HomeActivity : AppCompatActivity() {
 
     private var modulo = Modulo.SORTEOS
     private var tokenInyectado = false
+    private var enPrimerPlano = false
+    private val handler = Handler(Looper.getMainLooper())
+    // El saldo se mueve en la web (rifas/casino) o en otro dispositivo: se consulta
+    // solo cada 5 segundos para que la etiqueta quede siempre viva.
+    private val refrescarSaldo = object : Runnable {
+        override fun run() {
+            if (enPrimerPlano) pedirSaldo()
+            handler.postDelayed(this, 5000)
+        }
+    }
 
     private val sorteos = mutableListOf<JsonObject>()
     private val loterias = mutableMapOf<Long, JsonObject>()
@@ -67,13 +79,23 @@ class HomeActivity : AppCompatActivity() {
         cargar()
     }
 
+    override fun onPause() {
+        super.onPause()
+        enPrimerPlano = false
+        handler.removeCallbacks(refrescarSaldo)
+    }
+
     override fun onDestroy() {
+        handler.removeCallbacks(refrescarSaldo)
         if (::updater.isInitialized) updater.unregister()
         super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
+        enPrimerPlano = true
+        handler.removeCallbacks(refrescarSaldo)
+        handler.post(refrescarSaldo)
         // Cada vez que la app vuelve a primer plano revisa si hay versión nueva.
         if (::updater.isInitialized) updater.check()
         // El saldo puede haber cambiado por una apuesta u otro dispositivo.
@@ -295,6 +317,18 @@ private fun prepararModulos() {
     b.webModulo.loadUrl(BuildConfig.LOTERIA_URL)
 }
 
+private fun pedirSaldo() {
+    ApiClient.api.me().enqueue(object : Callback<JsonObject> {
+        override fun onResponse(call: Call<JsonObject>, res: Response<JsonObject>) {
+            if (res.isSuccessful) {
+                SessionStore.saldo = num(res.body()!!, "saldo")
+                pintarSaldo()
+            }
+        }
+        override fun onFailure(call: Call<JsonObject>, t: Throwable) { /* se reintenta al proximo ciclo */ }
+    })
+}
+
 private fun seleccionar(nuevo: Modulo) {
     modulo = nuevo
     b.contenidoSorteos.visibility = if (nuevo == Modulo.SORTEOS) View.VISIBLE else View.GONE
@@ -304,7 +338,7 @@ private fun seleccionar(nuevo: Modulo) {
     b.tabSorteos.setTextColor(if (nuevo == Modulo.SORTEOS) activo else inactivo)
     b.tabRifas.setTextColor(if (nuevo == Modulo.RIFAS) activo else inactivo)
     b.tabCasino.setTextColor(if (nuevo == Modulo.CASINO) activo else inactivo)
-    if (nuevo != Modulo.SORTEOS) cargarModulo(nuevo)
+    if (nuevo != Modulo.SORTEOS) cargarModulo(nuevo) else pedirSaldo()
 }
 
 private fun cargarModulo(nuevo: Modulo) {
