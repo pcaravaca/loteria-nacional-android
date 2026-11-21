@@ -345,6 +345,8 @@ private fun cargarModulo(nuevo: Modulo) {
     val base = BuildConfig.LOTERIA_URL.trimEnd('/')
     val ruta = if (nuevo == Modulo.RIFAS) "#/rifas" else "#/casino"
     val tk = SessionStore.token?.replace("'", "\\'") ?: ""
-    b.webModulo.loadUrl("$base/?token=$tk$ruta")
+    // `app=1` le dice a la web que corra en modo app: sin sidebar ni topbar
+    // propios (la app ya los pone) y con el lobby a todo ancho.
+    b.webModulo.loadUrl("$base/?token=$tk&app=1$ruta")
 }
 }
