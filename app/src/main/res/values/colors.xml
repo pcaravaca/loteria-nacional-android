@@ -1,13 +1,13 @@
 <resources>
-    <color name="lot_bg">#07211A</color>
-    <color name="lot_surface">#0E2F25</color>
-    <color name="lot_surface_alt">#143B2D</color>
-    <color name="lot_line">#1E4A39</color>
-    <color name="lot_text">#F4F8F6</color>
-    <color name="lot_text_muted">#9DBBAD</color>
-    <color name="lot_accent">#C9A227</color>
-    <color name="lot_accent_dark">#A8861B</color>
-    <color name="lot_success">#3FBF6B</color>
-    <color name="lot_danger">#E5604F</color>
-    <color name="lot_gold_light">#E8CE7A</color>
+    <color name="lot_bg">#070d16</color>
+    <color name="lot_surface">#0f1c31</color>
+    <color name="lot_surface_alt">#15253f</color>
+    <color name="lot_line">#25405f</color>
+    <color name="lot_text">#e2e8f0</color>
+    <color name="lot_text_muted">#64748b</color>
+    <color name="lot_accent">#3b82f6</color>
+    <color name="lot_accent_dark">#1e40af</color>
+    <color name="lot_success">#3fbf6b</color>
+    <color name="lot_danger">#e5604f</color>
+    <color name="lot_gold_light">#e8ce7a</color>
 </resources>
