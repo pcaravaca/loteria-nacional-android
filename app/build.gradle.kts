@@ -11,8 +11,8 @@ android {
         applicationId = "com.diamondsb.lotto"
         minSdk = 24
         targetSdk = 34
-        versionCode = 9
-        versionName = "0.3.6"
+        versionCode = 10
+        versionName = "0.3.7"
         // Backend de Loteria Nacional CR v2. Por defecto el del servidor Ubuntu.
         buildConfigField(
             "String",

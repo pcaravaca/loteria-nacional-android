@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.speech.tts.TextToSpeech
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.view.LayoutInflater
@@ -32,7 +34,11 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityHomeBinding
     private lateinit var updater: Updater
-    private enum class Modulo { SORTEOS, RIFAS, CASINO }
+    // Secciones que la app abre en el WebView (la API es la misma que la web).
+    private enum class Modulo {
+        SORTEOS, LOTERIAS, QUINIELAS, RIFAS, CASINO,
+        MIS_APUESTAS, RESULTADOS, REPORTES, PERFIL
+    }
 
     private var modulo = Modulo.SORTEOS
     private var tokenInyectado = false
@@ -88,6 +94,8 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         handler.removeCallbacks(refrescarSaldo)
         if (::updater.isInitialized) updater.unregister()
+        tts?.shutdown()
+        tts = null
         super.onDestroy()
     }
 
@@ -293,8 +301,13 @@ class HomeActivity : AppCompatActivity() {
 
 private fun prepararModulos() {
     b.tabSorteos.setOnClickListener { seleccionar(Modulo.SORTEOS) }
+    b.tabLoterias.setOnClickListener { seleccionar(Modulo.LOTERIAS) }
+    b.tabQuinielas.setOnClickListener { seleccionar(Modulo.QUINIELAS) }
     b.tabRifas.setOnClickListener { seleccionar(Modulo.RIFAS) }
     b.tabCasino.setOnClickListener { seleccionar(Modulo.CASINO) }
+
+    // Las secciones que no entran en la barra van en el menú del encabezado.
+    b.btnMenu.setOnClickListener { mostrarMenu() }
 
     val ws = b.webModulo.settings
     ws.javaScriptEnabled = true
@@ -314,7 +327,41 @@ private fun prepararModulos() {
             }
         }
     }
+    prepararVoz()
     b.webModulo.loadUrl(BuildConfig.LOTERIA_URL)
+}
+
+// El WebView de Android no trae Web Speech API: la voz de la bolilla del bingo
+// se delega al TextToSpeech del sistema a traves de esta interfaz JS.
+private var tts: TextToSpeech? = null
+private var ttsListo = false
+
+private fun prepararVoz() {
+    tts = TextToSpeech(this) { estado ->
+        if (estado == TextToSpeech.SUCCESS) {
+            tts?.language = Locale("es", "CR")
+            ttsListo = true
+        }
+    }
+    b.webModulo.addJavascriptInterface(
+        object {
+            @JavascriptInterface
+            fun hablar(texto: String, pitch: Double, rate: Double) {
+                val motor = tts ?: return
+                if (!ttsListo) return
+                motor.language = Locale("es", "CR")
+                motor.setPitch(pitch.toFloat())
+                motor.setSpeechRate(rate.toFloat())
+                motor.speak(texto, TextToSpeech.QUEUE_FLUSH, null, "bolilla")
+            }
+
+            @JavascriptInterface
+            fun callar() {
+                tts?.stop()
+            }
+        },
+        "LottoVoz",
+    )
 }
 
 private fun pedirSaldo() {
@@ -336,14 +383,43 @@ private fun seleccionar(nuevo: Modulo) {
     val activo = getColor(R.color.lot_accent)
     val inactivo = getColor(R.color.lot_text_muted)
     b.tabSorteos.setTextColor(if (nuevo == Modulo.SORTEOS) activo else inactivo)
+    b.tabLoterias.setTextColor(if (nuevo == Modulo.LOTERIAS) activo else inactivo)
+    b.tabQuinielas.setTextColor(if (nuevo == Modulo.QUINIELAS) activo else inactivo)
     b.tabRifas.setTextColor(if (nuevo == Modulo.RIFAS) activo else inactivo)
     b.tabCasino.setTextColor(if (nuevo == Modulo.CASINO) activo else inactivo)
     if (nuevo != Modulo.SORTEOS) cargarModulo(nuevo) else pedirSaldo()
 }
 
+/** Secciones completas de la web que no caben en la barra inferior. */
+private fun mostrarMenu() {
+    val opciones = arrayOf(
+        "Mis apuestas" to Modulo.MIS_APUESTAS,
+        "Resultados" to Modulo.RESULTADOS,
+        "Reportes" to Modulo.REPORTES,
+        "Mi perfil" to Modulo.PERFIL,
+    )
+    AlertDialog.Builder(this)
+        .setTitle("Secciones")
+        .setItems(opciones.map { it.first }.toTypedArray()) { _, which ->
+            seleccionar(opciones[which].second)
+        }
+        .setNegativeButton("Cerrar", null)
+        .show()
+}
+
 private fun cargarModulo(nuevo: Modulo) {
     val base = BuildConfig.LOTERIA_URL.trimEnd('/')
-    val ruta = if (nuevo == Modulo.RIFAS) "#/rifas" else "#/casino"
+    val ruta = when (nuevo) {
+        Modulo.LOTERIAS -> "#/loterias"
+        Modulo.QUINIELAS -> "#/quinielas"
+        Modulo.RIFAS -> "#/rifas"
+        Modulo.CASINO -> "#/casino"
+        Modulo.MIS_APUESTAS -> "#/mis-apuestas"
+        Modulo.RESULTADOS -> "#/resultados"
+        Modulo.REPORTES -> "#/reportes"
+        Modulo.PERFIL -> "#/perfil"
+        Modulo.SORTEOS -> "#/dashboard"
+    }
     val tk = SessionStore.token?.replace("'", "\\'") ?: ""
     // `app=1` le dice a la web que corra en modo app: sin sidebar ni topbar
     // propios (la app ya los pone) y con el lobby a todo ancho.
