@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.webkit.JavascriptInterface
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.view.LayoutInflater
@@ -324,6 +325,11 @@ private fun prepararModulos() {
     ws.domStorageEnabled = true
     ws.loadWithOverviewMode = true
     ws.useWideViewPort = true
+    // El WebView de Android ignora `no-store` y se queda con el index.html del
+    // build anterior: los assets viejos se siguen sirviendo (immutable) y la
+    // aplicacion queda con el CSS de un deploy viejo. Sin cache, cada carga
+    // trae el HTML actual.
+    ws.cacheMode = WebSettings.LOAD_NO_CACHE
 
     b.webModulo.webViewClient = object : WebViewClient() {
         override fun onPageFinished(view: WebView, url: String) {
