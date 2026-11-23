@@ -47,6 +47,17 @@
                 android:textColor="@color/lot_accent"
                 android:textSize="22sp"
                 android:textStyle="bold" />
+
+            <!-- Bono / free plays: solo aparece cuando hay saldo promocional. -->
+            <TextView
+                android:id="@+id/tvBono"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Bono ₡0"
+                android:textColor="@color/lot_text_muted"
+                android:textSize="12sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -127,13 +138,24 @@
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/tabPanel"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Panel"
+            android:textColor="@color/lot_accent"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
             android:id="@+id/tabSorteos"
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_weight="1"
             android:gravity="center"
             android:text="Sorteos"
-            android:textColor="@color/lot_accent"
+            android:textColor="@color/lot_text_muted"
             android:textSize="12sp"
             android:textStyle="bold" />
 

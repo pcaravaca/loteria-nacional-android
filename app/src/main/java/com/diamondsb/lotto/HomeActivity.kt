@@ -36,7 +36,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var updater: Updater
     // Secciones que la app abre en el WebView (la API es la misma que la web).
     private enum class Modulo {
-        SORTEOS, LOTERIAS, QUINIELAS, RIFAS, CASINO,
+        PANEL, SORTEOS, LOTERIAS, QUINIELAS, RIFAS, CASINO,
         MIS_APUESTAS, RESULTADOS, REPORTES, PERFIL
     }
 
@@ -112,6 +112,7 @@ class HomeActivity : AppCompatActivity() {
                 if (res.isSuccessful() && res.body() != null) {
                     val u = res.body()!!
                     SessionStore.saldo = num(u, "saldo")
+                    SessionStore.bono = num(u, "bono")
                     pintarSaldo()
                 }
             }
@@ -122,6 +123,13 @@ class HomeActivity : AppCompatActivity() {
 
     private fun pintarSaldo() {
         b.tvSaldo.text = money(SessionStore.saldo)
+        // El bono es saldo promocional: se muestra solo si hay.
+        if (SessionStore.bono > 0.0) {
+            b.tvBono.visibility = View.VISIBLE
+            b.tvBono.text = "Bono " + money(SessionStore.bono)
+        } else {
+            b.tvBono.visibility = View.GONE
+        }
     }
 
     private fun cargar() {
@@ -239,6 +247,7 @@ class HomeActivity : AppCompatActivity() {
                     override fun onResponse(call: Call<JsonObject>, r: Response<JsonObject>) {
                         if (r.isSuccessful() && r.body() != null) {
                             SessionStore.saldo = num(r.body()!!, "saldo")
+                            SessionStore.bono = num(r.body()!!, "bono")
                             pintarSaldo()
                         }
                     }
@@ -300,6 +309,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
 private fun prepararModulos() {
+    b.tabPanel.setOnClickListener { seleccionar(Modulo.PANEL) }
     b.tabSorteos.setOnClickListener { seleccionar(Modulo.SORTEOS) }
     b.tabLoterias.setOnClickListener { seleccionar(Modulo.LOTERIAS) }
     b.tabQuinielas.setOnClickListener { seleccionar(Modulo.QUINIELAS) }
@@ -369,6 +379,7 @@ private fun pedirSaldo() {
         override fun onResponse(call: Call<JsonObject>, res: Response<JsonObject>) {
             if (res.isSuccessful) {
                 SessionStore.saldo = num(res.body()!!, "saldo")
+                SessionStore.bono = num(res.body()!!, "bono")
                 pintarSaldo()
             }
         }
@@ -382,6 +393,7 @@ private fun seleccionar(nuevo: Modulo) {
     b.webModulo.visibility = if (nuevo == Modulo.SORTEOS) View.GONE else View.VISIBLE
     val activo = getColor(R.color.lot_accent)
     val inactivo = getColor(R.color.lot_text_muted)
+    b.tabPanel.setTextColor(if (nuevo == Modulo.PANEL) activo else inactivo)
     b.tabSorteos.setTextColor(if (nuevo == Modulo.SORTEOS) activo else inactivo)
     b.tabLoterias.setTextColor(if (nuevo == Modulo.LOTERIAS) activo else inactivo)
     b.tabQuinielas.setTextColor(if (nuevo == Modulo.QUINIELAS) activo else inactivo)
@@ -418,6 +430,7 @@ private fun cargarModulo(nuevo: Modulo) {
         Modulo.RESULTADOS -> "#/resultados"
         Modulo.REPORTES -> "#/reportes"
         Modulo.PERFIL -> "#/perfil"
+        Modulo.PANEL -> "#/dashboard"
         Modulo.SORTEOS -> "#/dashboard"
     }
     val tk = SessionStore.token?.replace("'", "\\'") ?: ""

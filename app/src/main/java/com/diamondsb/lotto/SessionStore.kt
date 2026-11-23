@@ -12,6 +12,7 @@ object SessionStore {
     private const val KEY_EMAIL = "email"
     private const val KEY_ROL = "rol"
     private const val KEY_SALDO = "saldo"
+    private const val KEY_BONO = "bono"
 
     private lateinit var prefs: SharedPreferences
 
@@ -38,6 +39,11 @@ object SessionStore {
     var saldo: Double
         get() = prefs.getFloat(KEY_SALDO, 0f).toDouble()
         set(value) { prefs.edit().putFloat(KEY_SALDO, value.toFloat()).apply() }
+
+    // Bono / free plays: saldo promocional, no retirable.
+    var bono: Double
+        get() = prefs.getFloat(KEY_BONO, 0f).toDouble()
+        set(value) { prefs.edit().putFloat(KEY_BONO, value.toFloat()).apply() }
 
     val isLoggedIn: Boolean get() = !token.isNullOrBlank()
 
