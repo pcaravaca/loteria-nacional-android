@@ -50,6 +50,15 @@
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMenu"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Menú"
+            android:textColor="@color/lot_text_muted"
+            android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSalir"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
@@ -125,8 +134,28 @@
             android:gravity="center"
             android:text="Sorteos"
             android:textColor="@color/lot_accent"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tabLoterias"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Loterías"
+            android:textColor="@color/lot_text_muted"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tabQuinielas"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Quinielas"
+            android:textColor="@color/lot_text_muted"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabRifas"
@@ -136,7 +165,7 @@
             android:gravity="center"
             android:text="Rifas"
             android:textColor="@color/lot_text_muted"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tabCasino"
@@ -146,6 +175,6 @@
             android:gravity="center"
             android:text="Casino"
             android:textColor="@color/lot_text_muted"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
     </LinearLayout>
 </LinearLayout>
