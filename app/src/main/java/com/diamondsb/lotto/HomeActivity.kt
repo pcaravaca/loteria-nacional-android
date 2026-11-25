@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.view.LayoutInflater
@@ -19,6 +20,7 @@ import com.diamondsb.lotto.databinding.ActivityHomeBinding
 import com.diamondsb.lotto.databinding.ItemSorteoNativeBinding
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -35,6 +37,8 @@ class HomeActivity : AppCompatActivity() {
     private enum class Modulo { SORTEOS, RIFAS, CASINO }
 
     private var modulo = Modulo.SORTEOS
+    // Impresora térmica Sunmi V2: mismo bridge y AIDL que POSMaster.
+    private var impresora: PrinterBridge? = null
     private var tokenInyectado = false
     private var enPrimerPlano = false
     private val handler = Handler(Looper.getMainLooper())
@@ -71,6 +75,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         prepararModulos()
+        prepararImpresora()
         seleccionar(Modulo.SORTEOS)
 
         updater = Updater(this, BuildConfig.LOTERIA_URL)
@@ -88,6 +93,8 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         handler.removeCallbacks(refrescarSaldo)
         if (::updater.isInitialized) updater.unregister()
+        impresora?.unbind()
+        impresora = null
         super.onDestroy()
     }
 
@@ -315,6 +322,55 @@ private fun prepararModulos() {
         }
     }
     b.webModulo.loadUrl(BuildConfig.LOTERIA_URL)
+}
+
+// Impresión térmica: el WebView expone `window.AndroidPOS`, el mismo contrato
+// que usa POSMaster. El HTML del comprobante lo genera el backend Go; acá sólo
+// se renderiza y se manda a la Sunmi (384 px útiles a 203 dpi).
+private fun prepararImpresora() {
+    val bridge = PrinterBridge(this)
+    bridge.onResult = { payload ->
+        val js = "window._pmPrintDispatch && window._pmPrintDispatch(" + JSONObject.quote(payload) + ")"
+        b.webModulo.post { b.webModulo.evaluateJavascript(js, null) }
+        runOnUiThread {
+            try {
+                val r = JSONObject(JSONObject(payload).getString("result"))
+                val ok = r.optBoolean("ok", false)
+                val detalle = if (ok) "Tique impreso" else (r.optString("error").ifBlank { r.optString("message") })
+                Toast.makeText(this@HomeActivity, detalle.ifBlank { "No se pudo imprimir" }, Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this@HomeActivity, "No se pudo imprimir", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    bridge.bind()
+    impresora = bridge
+    b.webModulo.addJavascriptInterface(object {
+        @JavascriptInterface
+        fun printHtml(payload: String) {
+            impresora?.printHtml(payload)
+        }
+
+        @JavascriptInterface
+        fun printReceipt(payload: String): String {
+            return impresora?.printReceipt(payload) ?: "{\"ok\":false,\"error\":\"impresora no disponible\"}"
+        }
+
+        @JavascriptInterface
+        fun getPrinterStatus(): String {
+            return impresora?.getPrinterStatus() ?: "{}"
+        }
+
+        @JavascriptInterface
+        fun getDeviceInfo(): String {
+            return impresora?.deviceInfo() ?: "{}"
+        }
+
+        @JavascriptInterface
+        fun showToast(mensaje: String) {
+            runOnUiThread { Toast.makeText(this@HomeActivity, mensaje, Toast.LENGTH_SHORT).show() }
+        }
+    }, "AndroidPOS")
 }
 
 private fun pedirSaldo() {

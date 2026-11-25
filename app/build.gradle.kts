@@ -36,6 +36,7 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+        aidl = true // puente de impresora térmica Sunmi V2 (AIDL woyou)
     }
 }
 
